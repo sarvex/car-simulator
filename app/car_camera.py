@@ -2,10 +2,9 @@ import harfang as hg
 from utils import *
 
 def CarCameraCreate(instance_node_name, scene):
-	o = {}
-	o['instance_node'] = scene.GetNode(instance_node_name)
+	o = {'instance_node': scene.GetNode(instance_node_name)}
 	if not o['instance_node'].IsValid():
-		print("!CarCameraCreate(): Instance node '" + instance_node_name + "' not found!")
+		print(f"!CarCameraCreate(): Instance node '{instance_node_name}' not found!")
 		return
 
 	o['scene_view'] = o['instance_node'].GetInstanceSceneView()

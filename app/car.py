@@ -4,13 +4,12 @@ from utils import RangeAdjust, MetersPerSecondToKMH, NodeGetPhysicsMass, NodeGet
 
 
 def CarModelCreate(name, instance_node_name, scene, scene_physics, resources, start_position, start_rotation):
-	o = {}
-	o['start_position'] = start_position
-	o['start_rotation'] = start_rotation
-	o['name'] = name
-
-	# Instance_node is not affected by physics.
-	o['instance_node'] = scene.GetNode(instance_node_name)
+	o = {
+		'start_position': start_position,
+		'start_rotation': start_rotation,
+		'name': name,
+		'instance_node': scene.GetNode(instance_node_name),
+	}
 	if not o['instance_node'].IsValid():
 		print("ERROR - Instance node not found !")
 		return
@@ -32,9 +31,9 @@ def CarModelCreate(name, instance_node_name, scene, scene_physics, resources, st
 
 	o['wheels'] = []
 	for n in range(4):
-		wheel = o['scene_view'].GetNode(scene, "wheel_" + str(n))
+		wheel = o['scene_view'].GetNode(scene, f"wheel_{str(n)}")
 		if not wheel.IsValid():
-			print("ERROR - Wheel_" + str(n) + " node not found !")
+			print(f"ERROR - Wheel_{str(n)} node not found !")
 			return
 		o['wheels'].append(wheel)
 
@@ -222,7 +221,7 @@ def CarModelUpdateWheel(rccar, scene, scene_physics, id, dts):
 
 	rot = wheel.GetTransform().GetRot()
 	rot.x = rot.x + rccar['wheels_rot_speed'][id] * dts
-	if id == 0 or id == 1:
+	if id in [0, 1]:
 		rot.y = hg.Deg(rccar['steering_angle'])
 
 	wheel.GetTransform().SetRot(rot)

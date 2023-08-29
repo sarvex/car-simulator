@@ -22,13 +22,12 @@ def DetectClosestTrack(nodes_track_data, target_pos):
 					closest_track_data = nodes_data
 					closest_vector = vector
 					closest_track = [vec_index, track]
-				else:
-					if hg.Contains(track_min_max, target_pos):
-						if hg.Dist(target_pos, vector) < hg.Dist(target_pos, closest_vector):
-							closest_track_data = nodes_data
-							closest_vector = vector
-							closest_track = [vec_index, track]
-							closest_default = False
+				elif hg.Contains(track_min_max, target_pos):
+					if hg.Dist(target_pos, vector) < hg.Dist(target_pos, closest_vector):
+						closest_track_data = nodes_data
+						closest_vector = vector
+						closest_track = [vec_index, track]
+						closest_default = False
 
 	if closest_default:  # need to detect by node because we are not sure that the track is the correct one
 		closest_vector = hg.Vec3(99999, 99999, 99999)  # reset closest vector
@@ -37,7 +36,7 @@ def DetectClosestTrack(nodes_track_data, target_pos):
 			node = nodes_data['node']
 			if not closest_track_data:
 				closest_track_data = nodes_data
-				for track in nodes_data['track_data']:
+				for track in closest_track_data['track_data']:
 					for vec_index, vector in enumerate(track['pos']):
 						if hg.Dist(target_pos, vector) < hg.Dist(target_pos, closest_vector):
 							closest_vector = vector
@@ -98,18 +97,17 @@ def HandleAutomatedCars(scene, res, nodes_track_data, local_pos, spawned_cars, d
 		for track_vector in track_vectors:
 			pos = track_vector['vector']
 			closest_car_distance = 999999
-			
+
 			for car in spawned_cars:
 				car_pos = car['node'].GetTransform().GetPos()
 				car_dist = hg.Dist(pos, car_pos)
 				if car_dist < closest_car_distance:
 					closest_car_distance = car_dist
-			
+
 			if closest_car_distance > 20: # Make sure cars do not spawn too close to another car (Issue #27)
 				node, _ = hg.CreateInstanceFromAssets(scene, hg.TranslationMat4(
 					pos), "vehicles/ai_vehicle/drivable_car.scn", res, hg.GetForwardPipelineInfo())
-				print("Just spawned a car at Vec3(" + str(pos.x) +
-					  ", " + str(pos.y) + ", " + str(pos.z) + ")")
+				print(f"Just spawned a car at Vec3({str(pos.x)}, {str(pos.y)}, {str(pos.z)})")
 				track_vector['node'] = node
 				spawned_cars.append(track_vector)
 				physics.SceneCreatePhysicsFromAssets(scene)
@@ -132,8 +130,7 @@ def HandleAutomatedCars(scene, res, nodes_track_data, local_pos, spawned_cars, d
 			car['track']['pos'][car['turn_index']], car['track']['pos'][car['turn_index'] + 1])
 		new_car_lerp = car['lerp_value'] + \
 			((KMHtoMPS(car['track']['speed']) / dist_vectors) * dts)
-		if new_car_lerp > 1:
-			new_car_lerp = 1
+		new_car_lerp = min(new_car_lerp, 1)
 		car['lerp_value'] = new_car_lerp
 		if car['turn_index'] < max_index:
 			car['vector'] = hg.Lerp(car['track']['pos'][car['turn_index']],
@@ -147,9 +144,9 @@ def HandleAutomatedCars(scene, res, nodes_track_data, local_pos, spawned_cars, d
 		car_wheels = []
 		scene_view_node = car['node'].GetInstanceSceneView()
 		for n in range(4):
-			wheel = scene_view_node.GetNode(scene, "wheel_" + str(n))
+			wheel = scene_view_node.GetNode(scene, f"wheel_{str(n)}")
 			if not wheel.IsValid():
-				print("ERROR - Wheel_" + str(n) + " node not found !")
+				print(f"ERROR - Wheel_{str(n)} node not found !")
 				return
 			car_wheels.append(wheel)
 
@@ -210,12 +207,10 @@ def GetTrackDataByNode(scene, track_data):
 # Draws green lines between each vector of a given track
 def DrawTrackData(node_track_data, opaque_view_id, vtx_line_layout, lines_program):
 	tracks = node_track_data['track_data']
-	for index, track in enumerate(tracks):
+	for track in tracks:
 		# index 123 roads in the same direction as driver
 		positions_list = track['pos']
-		current_index = 0
 		max_index = len(positions_list) - 1
-		for i in range(max_index):
+		for current_index, _ in enumerate(range(max_index)):
 			DrawLine(hg.Vec3(positions_list[current_index].x, positions_list[current_index].y + 0.05, positions_list[current_index].z), hg.Vec3(positions_list[current_index + 1].x, positions_list[current_index + 1].y + 0.05, positions_list[current_index + 1].z),
 					 hg.Color.Green, opaque_view_id, vtx_line_layout, lines_program)
-			current_index += 1
