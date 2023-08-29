@@ -2,14 +2,12 @@ import json
 import os
 
 def GetBlockTracks():
-	path = os.getcwd() + "/assets/road_tracks"
+	path = f"{os.getcwd()}/assets/road_tracks"
 
 	files = []
 
 	for r, d, f in os.walk(path):
-		for file in f:
-			files.append(os.path.join(r, file))
-
+		files.extend(os.path.join(r, file) for file in f)
 	final_data = {}
 
 	for f in files:
